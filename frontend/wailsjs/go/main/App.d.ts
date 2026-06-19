@@ -17,11 +17,15 @@ export function DeleteSubscription(arg1:string):Promise<void>;
 
 export function Disconnect(arg1:string):Promise<void>;
 
+export function ExportAll():Promise<string>;
+
 export function GetConnection(arg1:string):Promise<models.Connection>;
 
 export function GetSettings():Promise<models.Settings>;
 
 export function Greet(arg1:string):Promise<string>;
+
+export function ImportAll(arg1:string):Promise<main.ImportResult>;
 
 export function IsConnected(arg1:string):Promise<boolean>;
 

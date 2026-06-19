@@ -14,7 +14,10 @@ Current implementation status:
 - Phase 4 MQTT Core Engine is complete: Eclipse Paho MQTT client with connection management, publish/subscribe, MQTT 3.1/3.1.1/5.0 support, TLS, Wails event emission, and payload encoding.
 - Phase 5 Connection Management UI is complete: sidebar connection list, tabbed create/edit form (General, Auth, Connection, TLS, MQTT 5, Will), connection status indicators, CRUD operations via Wails bindings, and useConnections/useMqttStatus hooks.
 - Phase 6 Publish and Subscribe Workflow is complete: subscription panel with add/remove, publish composer with QoS/retain/format, message timeline with real-time events, message filtering (direction/topic), publish history, and backend CRUD endpoints for subscriptions/messages.
-- Import/export and production MQTT workflows are not implemented yet.
+- Phase 7 Message Inspector is complete: message detail drawer with payload display modes (text/JSON/hex/base64), copy actions, QoS/retain filters, and MQTT 5 property display.
+- Phase 8 Settings and Preferences is complete: settings page with theme/language/MQTT/logging/copilot configuration, persisted via Wails bindings.
+- Phase 9 Import and Export is complete: JSON export of all connections and subscriptions, JSON import with ID remapping and error reporting.
+- Phases 10–12 (security hardening, advanced features, testing/packaging) remain. Passwords are currently stored in plaintext in SQLite; OS keychain integration is planned.
 
 ## Commands
 
@@ -100,7 +103,10 @@ Planned backend packages from `PLAN.md` and `docs/rewrite-roadmap.md` include im
 - `frontend/src/hooks/useMessages.ts` — Hook for paginated message list with real-time `mqtt:message:received`/`mqtt:message:published` event listeners.
 - `frontend/src/features/subscriptions/SubscriptionPanel.tsx` — Subscription list with add/remove form, QoS selector, topic filter input.
 - `frontend/src/features/publish/PublishComposer.tsx` — Publish form with topic, payload, QoS, retain, format selector, and recent topics dropdown.
-- `frontend/src/features/messages/MessageTimeline.tsx` — Message list with direction badges, topic filter, direction filter, expandable payloads, and clear action.
+- `frontend/src/features/messages/MessageTimeline.tsx` — Message list with direction badges, QoS/retain/topic filters, message detail drawer, payload display modes (text/JSON/hex/base64), copy actions, and clear action.
+- `frontend/src/features/settings/SettingsPage.tsx` — Settings page with theme, language, MQTT, logging, and AI copilot configuration.
+- `frontend/src/features/import-export/ImportExportPage.tsx` — JSON export/import page with file download and upload.
+- `frontend/src/hooks/useSettings.ts` — Hook for loading and saving application settings.
 - `frontend/src/features/connections/ConnectionStatus.tsx` — Status dot component (green/yellow/red/gray).
 - `frontend/src/features/connections/ConnectionListItem.tsx` — Connection row with status, actions, context menu, delete confirm.
 - `frontend/src/features/connections/ConnectionList.tsx` — Sidebar connection list with New button.

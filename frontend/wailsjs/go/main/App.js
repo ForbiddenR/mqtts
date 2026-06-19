@@ -30,6 +30,10 @@ export function Disconnect(arg1) {
   return window['go']['main']['App']['Disconnect'](arg1);
 }
 
+export function ExportAll() {
+  return window['go']['main']['App']['ExportAll']();
+}
+
 export function GetConnection(arg1) {
   return window['go']['main']['App']['GetConnection'](arg1);
 }
@@ -40,6 +44,10 @@ export function GetSettings() {
 
 export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
+}
+
+export function ImportAll(arg1) {
+  return window['go']['main']['App']['ImportAll'](arg1);
 }
 
 export function IsConnected(arg1) {

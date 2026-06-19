@@ -567,6 +567,8 @@ Deliverables:
 
 ## Phase 7: Message Timeline and Inspector
 
+Status: complete. The Phase 7 inspector adds a message detail drawer with payload display modes (text/JSON/hex/base64), copy actions, QoS/retain filters, and MQTT 5 property display.
+
 Tasks:
 
 - Build virtualized message list
@@ -592,6 +594,8 @@ Deliverables:
 
 ## Phase 8: Settings and Preferences
 
+Status: complete. The Phase 8 settings page provides theme/language/MQTT/logging/copilot configuration, persisted via Wails bindings.
+
 Tasks:
 
 - Add settings page
@@ -611,6 +615,8 @@ Deliverables:
 - Configurable UI preferences
 
 ## Phase 9: Import, Export, and Migration
+
+Status: complete. JSON export of all connections and subscriptions with file download, and JSON import with ID remapping and error reporting. MQTTX format import is not yet implemented.
 
 Tasks:
 

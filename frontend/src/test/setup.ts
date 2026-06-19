@@ -30,6 +30,8 @@ Object.defineProperty(window, 'go', {
         ListPublishHeaders: (_connId: string) => Promise.resolve([]),
         ListPublishPayloads: (_connId: string) => Promise.resolve([]),
         UpdateSettings: (_settings: unknown) => Promise.resolve(undefined),
+        ExportAll: () => Promise.resolve('{}'),
+        ImportAll: (_json: string) => Promise.resolve({ connectionsImported: 0, subscriptionsImported: 0 }),
       },
     },
   },

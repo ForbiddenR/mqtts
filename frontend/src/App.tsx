@@ -4,24 +4,27 @@ import { ConnectionForm } from './features/connections/ConnectionForm';
 import { SubscriptionPanel } from './features/subscriptions/SubscriptionPanel';
 import { PublishComposer } from './features/publish/PublishComposer';
 import { MessageTimeline } from './features/messages/MessageTimeline';
+import { SettingsPage } from './features/settings/SettingsPage';
+import { ImportExportPage } from './features/import-export/ImportExportPage';
 import { useConnections } from './hooks/useConnections';
 import { useMqttStatus } from './hooks/useMqttStatus';
 import { useSubscriptions } from './hooks/useSubscriptions';
 import { useMessages } from './hooks/useMessages';
+import { useSettings } from './hooks/useSettings';
 import { Greet } from '../wailsjs/go/main/App';
 import type { models } from '../wailsjs/go/models';
 
 export default function App() {
   const connectionsResult = useConnections();
   const { connections } = connectionsResult;
+  const settingsResult = useSettings();
 
   const connectionIds = useMemo(() => connections.map((c) => c.id), [connections]);
   const mqttResult = useMqttStatus(connectionIds);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [view, setView] = useState<'list' | 'form'>('list');
+  const [view, setView] = useState<'list' | 'form' | 'settings' | 'import-export'>('list');
   const [editing, setEditing] = useState<models.Connection | null>(null);
-  const [rightPanel, setRightPanel] = useState<'publish' | 'subscriptions'>('publish');
   const [greeting, setGreeting] = useState('');
 
   const selectedConn = useMemo(
@@ -36,7 +39,7 @@ export default function App() {
 
   useEffect(() => {
     let isMounted = true;
-    Greet('Phase 6')
+    Greet('Phase 8')
       .then((msg) => {
         if (isMounted) setGreeting(msg);
       })
@@ -76,9 +79,27 @@ export default function App() {
       {/* Sidebar */}
       <aside className="flex w-80 shrink-0 flex-col border-r border-slate-800 bg-slate-900">
         <div className="border-b border-slate-800 px-5 py-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-400">mqtts</p>
-          <h1 className="mt-2 text-lg font-semibold text-white">MQTT workbench</h1>
-          <p className="mt-1 text-sm text-slate-500">MQTT client for developers</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-400">mqtts</p>
+              <h1 className="mt-2 text-lg font-semibold text-white">MQTT workbench</h1>
+            </div>
+            <button
+              type="button"
+              onClick={() => setView(view === 'settings' ? 'list' : 'settings')}
+              className={`rounded-lg p-2 transition ${
+                view === 'settings'
+                  ? 'bg-cyan-500/15 text-cyan-400'
+                  : 'text-slate-500 hover:bg-slate-800 hover:text-slate-300'
+              }`}
+              title="Settings"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -86,31 +107,47 @@ export default function App() {
             connections={connectionsResult}
             mqtt={mqttResult}
             selectedId={selectedId}
-            onSelect={setSelectedId}
+            onSelect={(id) => { setSelectedId(id); setView('list'); }}
             onNew={handleNew}
             onEdit={handleEdit}
           />
         </div>
 
-        <div className="border-t border-slate-800 px-5 py-3">
+        <div className="border-t border-slate-800 px-5 py-3 flex items-center justify-between">
           <p className="text-xs text-slate-600">
             {connections.length} connection{connections.length !== 1 ? 's' : ''}
           </p>
+          <button
+            type="button"
+            onClick={() => setView(view === 'import-export' ? 'list' : 'import-export')}
+            className={`rounded-lg p-1.5 transition ${
+              view === 'import-export'
+                ? 'bg-cyan-500/15 text-cyan-400'
+                : 'text-slate-600 hover:text-slate-400'
+            }`}
+            title="Import / Export"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+          </button>
         </div>
       </aside>
 
       {/* Main content */}
       <main className="flex flex-1 flex-col overflow-hidden">
-        {view === 'form' ? (
+        {view === 'settings' ? (
+          <SettingsPage settings={settingsResult} onClose={() => setView('list')} />
+        ) : view === 'import-export' ? (
+          <ImportExportPage onClose={() => setView('list')} onImportComplete={() => connectionsResult.reload()} />
+        ) : view === 'form' ? (
           <ConnectionForm
             connection={editing}
             onSave={handleSave}
             onCancel={handleCancel}
           />
         ) : selectedConn && isConnected ? (
-          /* Connected: show subscription + messages + publish */
           <div className="flex flex-1 overflow-hidden">
-            {/* Left: Subscription panel */}
             <div className="w-64 shrink-0 border-r border-slate-800">
               <SubscriptionPanel
                 connectionId={selectedId!}
@@ -118,7 +155,6 @@ export default function App() {
               />
             </div>
 
-            {/* Center: Message timeline */}
             <div className="flex flex-1 flex-col overflow-hidden">
               <MessageTimeline
                 connectionId={selectedId!}
@@ -126,7 +162,6 @@ export default function App() {
               />
             </div>
 
-            {/* Right: Publish composer */}
             <div className="w-80 shrink-0 border-l border-slate-800">
               <PublishComposer
                 connectionId={selectedId!}
@@ -135,7 +170,6 @@ export default function App() {
             </div>
           </div>
         ) : selectedConn ? (
-          /* Selected but not connected */
           <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
             <div className="max-w-md space-y-4">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-800">
@@ -163,7 +197,6 @@ export default function App() {
             {greeting && <p className="mt-8 text-sm text-slate-600">{greeting}</p>}
           </div>
         ) : (
-          /* No connection selected */
           <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
             <div className="mb-6 space-y-2 text-slate-500">
               <svg

@@ -1,5 +1,21 @@
 export namespace main {
 	
+	export class ImportResult {
+	    connectionsImported: number;
+	    subscriptionsImported: number;
+	    errors?: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ImportResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.connectionsImported = source["connectionsImported"];
+	        this.subscriptionsImported = source["subscriptionsImported"];
+	        this.errors = source["errors"];
+	    }
+	}
 	export class ListMessagesInput {
 	    connectionId: string;
 	    limit: number;

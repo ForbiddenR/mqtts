@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"runtime"
 
@@ -188,4 +189,88 @@ func (a *App) GetSettings() (*models.Settings, error) {
 // UpdateSettings persists application settings changes.
 func (a *App) UpdateSettings(s *models.Settings) error {
 	return a.store.Settings.Update(a.ctx, s)
+}
+
+// --- Import/Export ---
+
+// ExportData represents the full export payload.
+type ExportData struct {
+	Connections  []models.Connection   `json:"connections"`
+	Subscriptions []models.Subscription `json:"subscriptions"`
+}
+
+// ExportAll exports all connections and their subscriptions as JSON.
+func (a *App) ExportAll() (string, error) {
+	conns, err := a.store.Connections.List(a.ctx)
+	if err != nil {
+		return "", fmt.Errorf("list connections: %w", err)
+	}
+
+	var allSubs []models.Subscription
+	for _, c := range conns {
+		subs, err := a.store.Subscriptions.ListByConnection(a.ctx, c.ID)
+		if err != nil {
+			return "", fmt.Errorf("list subscriptions for %s: %w", c.ID, err)
+		}
+		allSubs = append(allSubs, subs...)
+	}
+
+	data := ExportData{
+		Connections:   conns,
+		Subscriptions: allSubs,
+	}
+
+	b, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return "", fmt.Errorf("marshal export: %w", err)
+	}
+	return string(b), nil
+}
+
+// ImportResult represents the result of an import operation.
+type ImportResult struct {
+	ConnectionsImported   int `json:"connectionsImported"`
+	SubscriptionsImported int `json:"subscriptionsImported"`
+	Errors                []string `json:"errors,omitempty"`
+}
+
+// ImportAll imports connections and subscriptions from a JSON string.
+func (a *App) ImportAll(jsonStr string) (*ImportResult, error) {
+	var data ExportData
+	if err := json.Unmarshal([]byte(jsonStr), &data); err != nil {
+		return nil, fmt.Errorf("parse import data: %w", err)
+	}
+
+	result := &ImportResult{}
+
+	// Build old-ID to new-ID mapping for connections
+	idMap := make(map[string]string)
+
+	for _, conn := range data.Connections {
+		oldID := conn.ID
+		conn.ID = ""
+		if err := a.store.Connections.Create(a.ctx, &conn); err != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("import connection %s: %v", conn.Name, err))
+			continue
+		}
+		idMap[oldID] = conn.ID
+		result.ConnectionsImported++
+	}
+
+	for _, sub := range data.Subscriptions {
+		newConnID, ok := idMap[sub.ConnectionID]
+		if !ok {
+			result.Errors = append(result.Errors, fmt.Sprintf("skip subscription %s: connection not found", sub.Topic))
+			continue
+		}
+		sub.ID = ""
+		sub.ConnectionID = newConnID
+		if err := a.store.Subscriptions.Create(a.ctx, &sub); err != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("import subscription %s: %v", sub.Topic, err))
+			continue
+		}
+		result.SubscriptionsImported++
+	}
+
+	return result, nil
 }
