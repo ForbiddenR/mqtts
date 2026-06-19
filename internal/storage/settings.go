@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -35,17 +36,24 @@ func (r *SettingsRepo) Get(ctx context.Context) (*models.Settings, error) {
 
 // Update persists settings changes.
 func (r *SettingsRepo) Update(ctx context.Context, s *models.Settings) error {
-	_, err := r.db.ExecContext(ctx, `
+	templatesJSON, err := json.Marshal(s.PayloadTemplates)
+	if err != nil {
+		return fmt.Errorf("marshal templates: %w", err)
+	}
+
+	_, err = r.db.ExecContext(ctx, `
 		UPDATE settings SET
 			width = ?, height = ?, auto_check = ?, current_lang = ?, current_theme = ?,
 			max_reconnect_times = ?, auto_resub = ?, sync_os_theme = ?, multi_topics = ?,
 			json_highlight = ?, enable_copilot = ?, open_ai_api_host = ?, open_ai_api_key = ?,
-			model = ?, log_level = ?, ignore_qos0_message = ?
+			model = ?, log_level = ?, ignore_qos0_message = ?, payload_templates = ?,
+			last_connection_id = ?
 		WHERE id = ?`,
 		s.Width, s.Height, boolToInt(s.AutoCheck), s.CurrentLang, s.CurrentTheme,
 		s.MaxReconnectTimes, boolToInt(s.AutoResub), boolToInt(s.SyncOSTheme), boolToInt(s.MultiTopics),
 		boolToInt(s.JSONHighlight), boolToInt(s.EnableCopilot), s.OpenAIAPIHost, s.OpenAIAPIKey,
-		s.Model, s.LogLevel, boolToInt(s.IgnoreQoS0Message),
+		s.Model, s.LogLevel, boolToInt(s.IgnoreQoS0Message), string(templatesJSON),
+		s.LastConnectionID,
 		settingsSingletonID,
 	)
 	if err != nil {
@@ -59,38 +67,48 @@ func (r *SettingsRepo) get(ctx context.Context) (*models.Settings, error) {
 		SELECT id, width, height, auto_check, current_lang, current_theme,
 			max_reconnect_times, auto_resub, sync_os_theme, multi_topics,
 			json_highlight, enable_copilot, open_ai_api_host, open_ai_api_key,
-			model, log_level, ignore_qos0_message
+			model, log_level, ignore_qos0_message, payload_templates, last_connection_id
 		FROM settings WHERE id = ?
 	`, settingsSingletonID)
 	return scanSettings(row)
 }
 
 func (r *SettingsRepo) create(ctx context.Context, s *models.Settings) error {
-	_, err := r.db.ExecContext(ctx, `
+	templatesJSON, err := json.Marshal(s.PayloadTemplates)
+	if err != nil {
+		return fmt.Errorf("marshal templates: %w", err)
+	}
+
+	_, err = r.db.ExecContext(ctx, `
 		INSERT INTO settings (
 			id, width, height, auto_check, current_lang, current_theme,
 			max_reconnect_times, auto_resub, sync_os_theme, multi_topics,
 			json_highlight, enable_copilot, open_ai_api_host, open_ai_api_key,
-			model, log_level, ignore_qos0_message
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			model, log_level, ignore_qos0_message, payload_templates, last_connection_id
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		s.ID, s.Width, s.Height, boolToInt(s.AutoCheck), s.CurrentLang, s.CurrentTheme,
 		s.MaxReconnectTimes, boolToInt(s.AutoResub), boolToInt(s.SyncOSTheme), boolToInt(s.MultiTopics),
 		boolToInt(s.JSONHighlight), boolToInt(s.EnableCopilot), s.OpenAIAPIHost, s.OpenAIAPIKey,
-		s.Model, s.LogLevel, boolToInt(s.IgnoreQoS0Message),
+		s.Model, s.LogLevel, boolToInt(s.IgnoreQoS0Message), string(templatesJSON),
+		s.LastConnectionID,
 	)
 	return err
 }
 
 func scanSettings(row *sql.Row) (*models.Settings, error) {
 	var s models.Settings
+	var templatesJSON string
 	err := row.Scan(
 		&s.ID, &s.Width, &s.Height, &s.AutoCheck, &s.CurrentLang, &s.CurrentTheme,
 		&s.MaxReconnectTimes, &s.AutoResub, &s.SyncOSTheme, &s.MultiTopics,
 		&s.JSONHighlight, &s.EnableCopilot, &s.OpenAIAPIHost, &s.OpenAIAPIKey,
-		&s.Model, &s.LogLevel, &s.IgnoreQoS0Message,
+		&s.Model, &s.LogLevel, &s.IgnoreQoS0Message, &templatesJSON, &s.LastConnectionID,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("scan settings: %w", err)
+	}
+	if templatesJSON != "" && templatesJSON != "null" {
+		_ = json.Unmarshal([]byte(templatesJSON), &s.PayloadTemplates)
 	}
 	return &s, nil
 }

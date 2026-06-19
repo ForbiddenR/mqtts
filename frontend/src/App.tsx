@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ConnectionList } from './features/connections/ConnectionList';
 import { ConnectionForm } from './features/connections/ConnectionForm';
+import { ConnectionStatsPanel } from './features/connections/ConnectionStatsPanel';
 import { SubscriptionPanel } from './features/subscriptions/SubscriptionPanel';
 import { PublishComposer } from './features/publish/PublishComposer';
 import { MessageTimeline } from './features/messages/MessageTimeline';
@@ -11,6 +12,8 @@ import { useMqttStatus } from './hooks/useMqttStatus';
 import { useSubscriptions } from './hooks/useSubscriptions';
 import { useMessages } from './hooks/useMessages';
 import { useSettings } from './hooks/useSettings';
+import { useConnectionStats } from './hooks/useConnectionStats';
+import type { PayloadTemplate } from './hooks/useSettings';
 import { Greet } from '../wailsjs/go/main/App';
 import type { models } from '../wailsjs/go/models';
 
@@ -25,6 +28,7 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [view, setView] = useState<'list' | 'form' | 'settings' | 'import-export'>('list');
   const [editing, setEditing] = useState<models.Connection | null>(null);
+  const [rightPanel, setRightPanel] = useState<'publish' | 'stats'>('publish');
   const [greeting, setGreeting] = useState('');
 
   const selectedConn = useMemo(
@@ -36,10 +40,11 @@ export default function App() {
 
   const subscriptions = useSubscriptions(selectedId);
   const messages = useMessages(selectedId);
+  const connectionStats = useConnectionStats(selectedId);
 
   useEffect(() => {
     let isMounted = true;
-    Greet('Phase 8')
+    Greet('Phase 11')
       .then((msg) => {
         if (isMounted) setGreeting(msg);
       })
@@ -48,6 +53,27 @@ export default function App() {
       isMounted = false;
     };
   }, []);
+
+  // Restore last selected connection from settings
+  useEffect(() => {
+    if (settingsResult.settings?.last_connection_id && !selectedId) {
+      const lastId = settingsResult.settings.last_connection_id;
+      // Only restore if the connection still exists
+      if (connections.some((c) => c.id === lastId)) {
+        setSelectedId(lastId);
+      }
+    }
+  }, [settingsResult.settings, connections, selectedId]);
+
+  // Persist selected connection ID to settings
+  useEffect(() => {
+    if (!settingsResult.settings || !settingsResult.save) return;
+    const current = settingsResult.settings.last_connection_id;
+    if (selectedId && selectedId !== current) {
+      settingsResult.settings.last_connection_id = selectedId;
+      settingsResult.save(settingsResult.settings).catch(() => {});
+    }
+  }, [selectedId, settingsResult.settings]);
 
   const handleNew = () => {
     setEditing(null);
@@ -73,6 +99,15 @@ export default function App() {
     setView('list');
     setEditing(null);
   };
+
+  const handleSaveTemplate = async (t: PayloadTemplate) => {
+    if (!settingsResult.settings) return;
+    const s = settingsResult.settings;
+    s.payload_templates = [...(s.payload_templates ?? []), t];
+    await settingsResult.save(s);
+  };
+
+  const templates = settingsResult.settings?.payload_templates ?? [];
 
   return (
     <div className="flex h-screen bg-slate-950 text-slate-200">
@@ -148,6 +183,7 @@ export default function App() {
           />
         ) : selectedConn && isConnected ? (
           <div className="flex flex-1 overflow-hidden">
+            {/* Left: Subscription panel */}
             <div className="w-64 shrink-0 border-r border-slate-800">
               <SubscriptionPanel
                 connectionId={selectedId!}
@@ -155,6 +191,7 @@ export default function App() {
               />
             </div>
 
+            {/* Center: Message timeline */}
             <div className="flex flex-1 flex-col overflow-hidden">
               <MessageTimeline
                 connectionId={selectedId!}
@@ -162,11 +199,44 @@ export default function App() {
               />
             </div>
 
-            <div className="w-80 shrink-0 border-l border-slate-800">
-              <PublishComposer
-                connectionId={selectedId!}
-                recentTopics={[]}
-              />
+            {/* Right: Publish / Stats toggle */}
+            <div className="w-80 shrink-0 border-l border-slate-800 flex flex-col">
+              <div className="flex border-b border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setRightPanel('publish')}
+                  className={`flex-1 px-3 py-2 text-xs font-medium transition ${
+                    rightPanel === 'publish'
+                      ? 'bg-slate-800 text-slate-200'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  Publish
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRightPanel('stats')}
+                  className={`flex-1 px-3 py-2 text-xs font-medium transition ${
+                    rightPanel === 'stats'
+                      ? 'bg-slate-800 text-slate-200'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  Stats
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                {rightPanel === 'publish' ? (
+                  <PublishComposer
+                    connectionId={selectedId!}
+                    recentTopics={[]}
+                    templates={templates}
+                    onSaveTemplate={handleSaveTemplate}
+                  />
+                ) : (
+                  <ConnectionStatsPanel stats={connectionStats.stats} />
+                )}
+              </div>
             </div>
           </div>
         ) : selectedConn ? (

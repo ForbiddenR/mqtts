@@ -182,4 +182,12 @@ CREATE TABLE settings (
 	);
 `,
 	},
+	// 9: add payload_templates to settings
+	{
+		sql: `ALTER TABLE settings ADD COLUMN payload_templates TEXT NOT NULL DEFAULT '[]';`,
+	},
+	// 10: add last_connection_id to settings
+	{
+		sql: `ALTER TABLE settings ADD COLUMN last_connection_id TEXT NOT NULL DEFAULT '';`,
+	},
 }

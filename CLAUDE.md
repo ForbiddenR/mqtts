@@ -18,7 +18,8 @@ Current implementation status:
 - Phase 8 Settings and Preferences is complete: settings page with theme/language/MQTT/logging/copilot configuration, persisted via Wails bindings.
 - Phase 9 Import and Export is complete: JSON export of all connections and subscriptions, JSON import with ID remapping and error reporting.
 - Phase 10 Security and Secret Storage is complete: OS keychain integration (macOS/Windows/Linux) via zalando/go-keyring, AES-GCM encrypted fallback, sensitive fields stripped from SQLite, no credentials in logs. Security model documented in `docs/security.md`.
-- Phases 11–12 (advanced features, testing/packaging) remain.
+- Phase 11 Advanced Features is complete: connection statistics (messages/bytes/latency/uptime), latency measurement via subscribe round-trip, payload templates stored in settings, saved workspace (last selected connection persisted).
+- Phase 12 (testing/packaging) remains. Backend has 22 Go tests; frontend has 7 component tests. Cross-platform CI/CD not yet configured.
 
 ## Commands
 
@@ -105,11 +106,13 @@ Planned backend packages from `PLAN.md` and `docs/rewrite-roadmap.md` include im
 - `frontend/src/hooks/useSubscriptions.ts` — Hook for subscription CRUD with auto-subscribe/unsubscribe on the broker.
 - `frontend/src/hooks/useMessages.ts` — Hook for paginated message list with real-time `mqtt:message:received`/`mqtt:message:published` event listeners.
 - `frontend/src/features/subscriptions/SubscriptionPanel.tsx` — Subscription list with add/remove form, QoS selector, topic filter input.
-- `frontend/src/features/publish/PublishComposer.tsx` — Publish form with topic, payload, QoS, retain, format selector, and recent topics dropdown.
+- `frontend/src/features/publish/PublishComposer.tsx` — Publish form with topic, payload, QoS, retain, format selector, recent topics dropdown, and payload templates (load/save).
 - `frontend/src/features/messages/MessageTimeline.tsx` — Message list with direction badges, QoS/retain/topic filters, message detail drawer, payload display modes (text/JSON/hex/base64), copy actions, and clear action.
 - `frontend/src/features/settings/SettingsPage.tsx` — Settings page with theme, language, MQTT, logging, and AI copilot configuration.
 - `frontend/src/features/import-export/ImportExportPage.tsx` — JSON export/import page with file download and upload.
-- `frontend/src/hooks/useSettings.ts` — Hook for loading and saving application settings.
+- `frontend/src/hooks/useSettings.ts` — Hook for loading and saving application settings, with PayloadTemplate type export.
+- `frontend/src/hooks/useConnectionStats.ts` — Hook polling connection statistics (messages/bytes/latency/uptime) every 3 seconds.
+- `frontend/src/features/connections/ConnectionStatsPanel.tsx` — Stats dashboard showing messages sent/received, bytes, latency, uptime, and last error.
 - `frontend/src/features/connections/ConnectionStatus.tsx` — Status dot component (green/yellow/red/gray).
 - `frontend/src/features/connections/ConnectionListItem.tsx` — Connection row with status, actions, context menu, delete confirm.
 - `frontend/src/features/connections/ConnectionList.tsx` — Sidebar connection list with New button.

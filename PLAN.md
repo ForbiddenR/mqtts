@@ -661,6 +661,8 @@ Deliverables:
 
 ## Phase 11: Advanced Features
 
+Status: partial. Implemented: connection statistics (messages/bytes sent/received, latency, uptime, reconnect count), latency measurement via subscribe round-trip, payload templates (stored in settings JSON), saved workspace (last selected connection ID persisted in settings). Remaining: script generators, message diffing, multi-window, CLI bridge.
+
 Depending on the original MQTTX feature audit, implement:
 
 - Payload templates

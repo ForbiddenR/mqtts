@@ -2,6 +2,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { GetSettings, UpdateSettings } from '../../wailsjs/go/main/App';
 import type { models } from '../../wailsjs/go/models';
 
+export interface PayloadTemplate {
+  name: string;
+  payload: string;
+  qos: number;
+  retain: boolean;
+}
+
 export interface UseSettingsResult {
   settings: models.Settings | null;
   loading: boolean;

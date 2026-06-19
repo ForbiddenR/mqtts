@@ -161,6 +161,34 @@ func (m *Manager) IsConnected(connID string) bool {
 	return session.IsConnected()
 }
 
+// GetStats returns connection statistics for the given connection.
+func (m *Manager) GetStats(connID string) ConnectionStats {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	session, ok := m.clients[connID]
+	if !ok {
+		return ConnectionStats{ConnectionID: connID}
+	}
+	return session.stats.Snapshot(connID)
+}
+
+// GetAllStats returns connection statistics for all active connections.
+func (m *Manager) GetAllStats() []ConnectionStats {
+	m.mu.RLock()
+	sessions := make([]*ClientSession, 0, len(m.clients))
+	for _, s := range m.clients {
+		sessions = append(sessions, s)
+	}
+	m.mu.RUnlock()
+
+	stats := make([]ConnectionStats, 0, len(sessions))
+	for _, s := range sessions {
+		stats = append(stats, s.stats.Snapshot(s.id))
+	}
+	return stats
+}
+
 // DisconnectAll disconnects all active sessions.
 func (m *Manager) DisconnectAll() {
 	m.mu.RLock()

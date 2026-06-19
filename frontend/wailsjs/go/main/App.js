@@ -34,8 +34,16 @@ export function ExportAll() {
   return window['go']['main']['App']['ExportAll']();
 }
 
+export function GetAllConnectionStats() {
+  return window['go']['main']['App']['GetAllConnectionStats']();
+}
+
 export function GetConnection(arg1) {
   return window['go']['main']['App']['GetConnection'](arg1);
+}
+
+export function GetConnectionStats(arg1) {
+  return window['go']['main']['App']['GetConnectionStats'](arg1);
 }
 
 export function GetSettings() {

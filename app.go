@@ -159,6 +159,16 @@ func (a *App) IsConnected(id string) bool {
 	return a.mqtt.IsConnected(id)
 }
 
+// GetConnectionStats returns real-time statistics for a connection.
+func (a *App) GetConnectionStats(id string) mqtt.ConnectionStats {
+	return a.mqtt.GetStats(id)
+}
+
+// GetAllConnectionStats returns statistics for all active connections.
+func (a *App) GetAllConnectionStats() []mqtt.ConnectionStats {
+	return a.mqtt.GetAllStats()
+}
+
 // --- Subscription methods exposed to frontend ---
 
 // ListSubscriptions returns all subscriptions for a connection.

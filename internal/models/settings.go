@@ -2,23 +2,33 @@ package models
 
 // Settings represents the application settings singleton.
 type Settings struct {
-	ID                 string `json:"id"`
-	Width              int    `json:"width"`
-	Height             int    `json:"height"`
-	AutoCheck          bool   `json:"auto_check"`
-	CurrentLang        string `json:"current_lang"`
-	CurrentTheme       string `json:"current_theme"`
-	MaxReconnectTimes  int    `json:"max_reconnect_times"`
-	AutoResub          bool   `json:"auto_resub"`
-	SyncOSTheme        bool   `json:"sync_os_theme"`
-	MultiTopics        bool   `json:"multi_topics"`
-	JSONHighlight      bool   `json:"json_highlight"`
-	EnableCopilot      bool   `json:"enable_copilot"`
-	OpenAIAPIHost      string `json:"open_ai_api_host"`
-	OpenAIAPIKey       string `json:"open_ai_api_key"`
-	Model              string `json:"model"`
-	LogLevel           string `json:"log_level"`
-	IgnoreQoS0Message  bool   `json:"ignore_qos0_message"`
+	ID                 string            `json:"id"`
+	Width              int               `json:"width"`
+	Height             int               `json:"height"`
+	AutoCheck          bool              `json:"auto_check"`
+	CurrentLang        string            `json:"current_lang"`
+	CurrentTheme       string            `json:"current_theme"`
+	MaxReconnectTimes  int               `json:"max_reconnect_times"`
+	AutoResub          bool              `json:"auto_resub"`
+	SyncOSTheme        bool              `json:"sync_os_theme"`
+	MultiTopics        bool              `json:"multi_topics"`
+	JSONHighlight      bool              `json:"json_highlight"`
+	EnableCopilot      bool              `json:"enable_copilot"`
+	OpenAIAPIHost      string            `json:"open_ai_api_host"`
+	OpenAIAPIKey       string            `json:"open_ai_api_key"`
+	Model              string            `json:"model"`
+	LogLevel           string            `json:"log_level"`
+	IgnoreQoS0Message  bool              `json:"ignore_qos0_message"`
+	PayloadTemplates   []PayloadTemplate `json:"payload_templates,omitempty"`
+	LastConnectionID   string            `json:"last_connection_id,omitempty"`
+}
+
+// PayloadTemplate represents a saved payload template.
+type PayloadTemplate struct {
+	Name    string `json:"name"`
+	Payload string `json:"payload"`
+	QoS     QoS    `json:"qos"`
+	Retain  bool   `json:"retain"`
 }
 
 // DefaultSettings returns settings with upstream MQTTX-compatible defaults.

@@ -21,6 +21,7 @@ type ClientSession struct {
 	manager   *Manager
 	connected atomic.Bool
 	cancel    context.CancelFunc
+	stats     *Stats
 }
 
 // NewClientSession creates a new ClientSession.
@@ -30,6 +31,7 @@ func NewClientSession(id string, conn *models.Connection, will *models.Will, man
 		conn:    conn,
 		will:    will,
 		manager: manager,
+		stats:   NewStats(),
 	}
 }
 
@@ -106,8 +108,12 @@ func (cs *ClientSession) Connect(ctx context.Context) error {
 	}
 
 	cs.connected.Store(true)
+	cs.stats.SetConnectedAt(time.Now())
 	cs.manager.events.emitConnectionStatus(cs.id, StatusConnected, "")
 	cs.manager.events.emitLog(cs.id, "info", "connected to broker")
+
+	// Start latency measurement
+	go cs.latencyLoop(ctx)
 
 	return nil
 }
@@ -163,6 +169,9 @@ func (cs *ClientSession) Publish(topic, payload string, qos byte, retain bool) e
 	if err := cs.manager.store.Messages.Create(context.Background(), &msg); err != nil {
 		cs.manager.events.emitLog(cs.id, "warn", fmt.Sprintf("failed to persist published message: %v", err))
 	}
+
+	// Record stats
+	cs.stats.RecordSent(int64(len(payload)))
 
 	// Emit published event
 	cs.manager.events.emitMessagePublished(cs.id, msg)
@@ -271,9 +280,45 @@ func (cs *ClientSession) handleMessage(publish *paho.Publish) {
 		cs.manager.events.emitLog(cs.id, "warn", fmt.Sprintf("failed to increment unread count: %v", err))
 	}
 
+	// Record stats
+	cs.stats.RecordReceived(int64(len(publish.Payload)))
+
 	// Emit received event
 	cs.manager.events.emitMessageReceived(cs.id, msg)
 	cs.manager.events.emitLog(cs.id, "debug", fmt.Sprintf("received message on %s", publish.Topic))
+}
+
+// latencyLoop periodically measures latency via a lightweight subscribe/unsubscribe round-trip.
+func (cs *ClientSession) latencyLoop(ctx context.Context) {
+	ticker := time.NewTicker(15 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if !cs.connected.Load() {
+				return
+			}
+			// Measure latency with a subscribe+unsubscribe round-trip on a probe topic
+			start := time.Now()
+			probeTopic := fmt.Sprintf("mqtts/latency-probe/%s", cs.id)
+			_, err := cs.client.Subscribe(ctx, &paho.Subscribe{
+				Subscriptions: []paho.SubscribeOptions{
+					{Topic: probeTopic, QoS: 0},
+				},
+			})
+			if err != nil {
+				continue
+			}
+			_, _ = cs.client.Unsubscribe(ctx, &paho.Unsubscribe{
+				Topics: []string{probeTopic},
+			})
+			latency := float64(time.Since(start).Microseconds()) / 1000.0
+			cs.stats.RecordLatency(latency)
+		}
+	}
 }
 
 // dialContext establishes a network connection based on the server URL scheme.

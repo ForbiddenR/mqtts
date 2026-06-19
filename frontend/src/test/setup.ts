@@ -32,6 +32,12 @@ Object.defineProperty(window, 'go', {
         UpdateSettings: (_settings: unknown) => Promise.resolve(undefined),
         ExportAll: () => Promise.resolve('{}'),
         ImportAll: (_json: string) => Promise.resolve({ connectionsImported: 0, subscriptionsImported: 0 }),
+        GetConnectionStats: (_id: string) => Promise.resolve({
+          connectionId: '', messagesSent: 0, messagesReceived: 0,
+          bytesSent: 0, bytesReceived: 0, lastLatencyMs: 0, avgLatencyMs: 0,
+          latencySamples: 0, reconnectCount: 0,
+        }),
+        GetAllConnectionStats: () => Promise.resolve([]),
       },
     },
   },
