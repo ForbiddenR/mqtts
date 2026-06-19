@@ -516,6 +516,8 @@ Status: complete. The Phase 4 MQTT engine adds Eclipse Paho MQTT client with con
 
 ## Phase 5: Connection Management UI
 
+Status: complete. The Phase 5 UI adds a sidebar connection list, tabbed create/edit form (General, Auth, Connection, TLS, MQTT 5, Will), connection status indicators, duplicate/delete/edit actions, and useConnections/useMqttStatus hooks integrated with Wails bindings.
+
 Tasks:
 
 - Build connection list/sidebar
