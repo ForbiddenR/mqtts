@@ -1,3 +1,58 @@
+export namespace main {
+	
+	export class PublishInput {
+	    connectionId: string;
+	    topic: string;
+	    payload: string;
+	    qos: number;
+	    retain: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new PublishInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.connectionId = source["connectionId"];
+	        this.topic = source["topic"];
+	        this.payload = source["payload"];
+	        this.qos = source["qos"];
+	        this.retain = source["retain"];
+	    }
+	}
+	export class SubscribeInput {
+	    connectionId: string;
+	    topic: string;
+	    qos: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new SubscribeInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.connectionId = source["connectionId"];
+	        this.topic = source["topic"];
+	        this.qos = source["qos"];
+	    }
+	}
+	export class UnsubscribeInput {
+	    connectionId: string;
+	    topic: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UnsubscribeInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.connectionId = source["connectionId"];
+	        this.topic = source["topic"];
+	    }
+	}
+
+}
+
 export namespace models {
 	
 	export class PushProperties {

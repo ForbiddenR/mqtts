@@ -11,7 +11,8 @@ Current implementation status:
 - Phase 1 Discovery and Feature Audit is complete under `docs/`.
 - Phase 2 Project Bootstrap is complete: the repository contains a Wails app scaffold, Go module, React frontend, Tailwind setup, Bun package scripts, bridge smoke test, and CI workflow.
 - Phase 3 Storage Layer is complete: SQLite persistence with migrations, repository pattern, and CRUD for connections, subscriptions, messages, wills, collections, settings, and publish history.
-- MQTT connection management, import/export, and production MQTT workflows are not implemented yet.
+- Phase 4 MQTT Core Engine is complete: Eclipse Paho MQTT client with connection management, publish/subscribe, MQTT 3.1/3.1.1/5.0 support, TLS, Wails event emission, and payload encoding.
+- Import/export and production MQTT workflows are not implemented yet.
 
 ## Commands
 
@@ -73,8 +74,14 @@ Run from the repository root after installing the Wails CLI and Linux WebKit/GTK
 - `internal/storage/collections.go` — CollectionRepo with adjacency-list tree CRUD.
 - `internal/storage/settings.go` — SettingsRepo with singleton pattern and default initialization.
 - `internal/storage/publish_history.go` — PublishHistoryRepo for headers and payloads.
+- `internal/mqtt/` — MQTT client engine using Eclipse Paho.
+- `internal/mqtt/manager.go` — Manager: concurrent-safe map of ClientSessions, connect/disconnect/publish/subscribe.
+- `internal/mqtt/client.go` — ClientSession: wraps Paho client, handles lifecycle, message handlers.
+- `internal/mqtt/options.go` — maps Connection model to Paho Connect packet, TLS config, server URL.
+- `internal/mqtt/events.go` — event types and Wails EventsEmit helpers for real-time frontend updates.
+- `internal/mqtt/payload.go` — payload encoding/decoding (plaintext, JSON, base64, hex).
 
-Planned backend packages from `PLAN.md` and `docs/rewrite-roadmap.md` include MQTT session management, import/export, and system integration.
+Planned backend packages from `PLAN.md` and `docs/rewrite-roadmap.md` include import/export and system integration.
 
 ### Frontend
 

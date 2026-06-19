@@ -512,6 +512,8 @@ Deliverables:
 - Backend emits real-time frontend events
 - MQTT feature parity test matrix
 
+Status: complete. The Phase 4 MQTT engine adds Eclipse Paho MQTT client with connection management, publish/subscribe, MQTT 3.1/3.1.1/5.0 support, TLS, Wails event emission, payload encoding, and unit tests.
+
 ## Phase 5: Connection Management UI
 
 Tasks:
