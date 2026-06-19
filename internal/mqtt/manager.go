@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/nictoarch/mqtts/internal/models"
+	"github.com/nictoarch/mqtts/internal/security"
 	"github.com/nictoarch/mqtts/internal/storage"
 )
 
@@ -14,15 +15,17 @@ type Manager struct {
 	mu      sync.RWMutex
 	clients map[string]*ClientSession
 	store   *storage.Store
+	creds   security.CredentialStore
 	events  *EventEmitter
 	ctx     context.Context
 }
 
 // NewManager creates a new MQTT Manager.
-func NewManager(ctx context.Context, store *storage.Store) *Manager {
+func NewManager(ctx context.Context, store *storage.Store, creds security.CredentialStore) *Manager {
 	return &Manager{
 		clients: make(map[string]*ClientSession),
 		store:   store,
+		creds:   creds,
 		events:  NewEventEmitter(ctx),
 		ctx:     ctx,
 	}
@@ -41,6 +44,14 @@ func (m *Manager) Connect(connID string) error {
 	conn, err := m.store.Connections.Get(m.ctx, connID)
 	if err != nil {
 		return fmt.Errorf("load connection: %w", err)
+	}
+
+	// Hydrate sensitive fields from credential store
+	if pwd, err := m.creds.Retrieve(connID, "password"); err == nil && pwd != "" {
+		conn.Password = pwd
+	}
+	if key, err := m.creds.Retrieve(connID, "key"); err == nil && key != "" {
+		conn.Key = key
 	}
 
 	// Load will if exists

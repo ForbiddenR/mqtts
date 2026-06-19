@@ -8,6 +8,7 @@ import (
 
 	mqtt "github.com/nictoarch/mqtts/internal/mqtt"
 	"github.com/nictoarch/mqtts/internal/models"
+	"github.com/nictoarch/mqtts/internal/security"
 	"github.com/nictoarch/mqtts/internal/storage"
 )
 
@@ -15,15 +16,16 @@ type App struct {
 	ctx   context.Context
 	store *storage.Store
 	mqtt  *mqtt.Manager
+	creds security.CredentialStore
 }
 
-func NewApp(store *storage.Store) *App {
-	return &App{store: store}
+func NewApp(store *storage.Store, creds security.CredentialStore) *App {
+	return &App{store: store, creds: creds}
 }
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	a.mqtt = mqtt.NewManager(ctx, a.store)
+	a.mqtt = mqtt.NewManager(ctx, a.store, a.creds)
 }
 
 // Greet is the frontend/backend bridge smoke test.
@@ -34,22 +36,39 @@ func (a *App) Greet(name string) string {
 // --- Connection methods exposed to frontend ---
 
 // ListConnections returns all saved connections.
+// Sensitive fields (password, TLS key) are stored in the OS keychain, not in SQLite.
 func (a *App) ListConnections() ([]models.Connection, error) {
-	return a.store.Connections.List(a.ctx)
+	conns, err := a.store.Connections.List(a.ctx)
+	if err != nil {
+		return nil, err
+	}
+	// Fill in passwords from keychain
+	for i := range conns {
+		a.hydrateCredentials(&conns[i])
+	}
+	return conns, nil
 }
 
 // GetConnection returns a connection by ID.
 func (a *App) GetConnection(id string) (*models.Connection, error) {
-	return a.store.Connections.Get(a.ctx, id)
+	conn, err := a.store.Connections.Get(a.ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	a.hydrateCredentials(conn)
+	return conn, nil
 }
 
 // CreateConnection saves a new connection.
+// Password and TLS key are stored in the OS keychain; the SQLite row stores an empty string.
 func (a *App) CreateConnection(c *models.Connection) error {
+	a.extractCredentials(c)
 	return a.store.Connections.Create(a.ctx, c)
 }
 
 // UpdateConnection updates an existing connection.
 func (a *App) UpdateConnection(c *models.Connection) error {
+	a.extractCredentials(c)
 	return a.store.Connections.Update(a.ctx, c)
 }
 
@@ -59,7 +78,31 @@ func (a *App) DeleteConnection(id string) error {
 	if a.mqtt.IsConnected(id) {
 		a.mqtt.Disconnect(id)
 	}
+	// Delete credentials from keychain
+	_ = a.creds.DeleteAll(id)
 	return a.store.Connections.Delete(a.ctx, id)
+}
+
+// extractCredentials moves sensitive fields from the connection model into the credential store.
+func (a *App) extractCredentials(c *models.Connection) {
+	if c.Password != "" {
+		_ = a.creds.Store(c.ID, "password", c.Password)
+		c.Password = ""
+	}
+	if c.Key != "" {
+		_ = a.creds.Store(c.ID, "key", c.Key)
+		c.Key = ""
+	}
+}
+
+// hydrateCredentials fills sensitive fields back into the connection model from the credential store.
+func (a *App) hydrateCredentials(c *models.Connection) {
+	if pwd, err := a.creds.Retrieve(c.ID, "password"); err == nil && pwd != "" {
+		c.Password = pwd
+	}
+	if key, err := a.creds.Retrieve(c.ID, "key"); err == nil && key != "" {
+		c.Key = key
+	}
 }
 
 // --- MQTT methods exposed to frontend ---

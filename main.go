@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/nictoarch/mqtts/internal/security"
 	"github.com/nictoarch/mqtts/internal/storage"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -29,7 +30,8 @@ func main() {
 	}
 
 	store := storage.NewStore(db)
-	app := NewApp(store)
+	creds := security.NewCredentialStore()
+	app := NewApp(store, creds)
 
 	err = wails.Run(&options.App{
 		Title:  "mqtts",

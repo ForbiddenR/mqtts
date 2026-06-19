@@ -17,7 +17,8 @@ Current implementation status:
 - Phase 7 Message Inspector is complete: message detail drawer with payload display modes (text/JSON/hex/base64), copy actions, QoS/retain filters, and MQTT 5 property display.
 - Phase 8 Settings and Preferences is complete: settings page with theme/language/MQTT/logging/copilot configuration, persisted via Wails bindings.
 - Phase 9 Import and Export is complete: JSON export of all connections and subscriptions, JSON import with ID remapping and error reporting.
-- Phases 10–12 (security hardening, advanced features, testing/packaging) remain. Passwords are currently stored in plaintext in SQLite; OS keychain integration is planned.
+- Phase 10 Security and Secret Storage is complete: OS keychain integration (macOS/Windows/Linux) via zalando/go-keyring, AES-GCM encrypted fallback, sensitive fields stripped from SQLite, no credentials in logs. Security model documented in `docs/security.md`.
+- Phases 11–12 (advanced features, testing/packaging) remain.
 
 ## Commands
 
@@ -84,6 +85,8 @@ Run from the repository root after installing the Wails CLI and Linux WebKit/GTK
 - `internal/mqtt/client.go` — ClientSession: wraps Paho client, handles lifecycle, message handlers.
 - `internal/mqtt/options.go` — maps Connection model to Paho Connect packet, TLS config, server URL.
 - `internal/mqtt/events.go` — event types and Wails EventsEmit helpers for real-time frontend updates.
+- `internal/security/` — credential storage with OS keychain and AES-GCM encrypted fallback.
+- `internal/security/store.go` — CredentialStore interface, KeychainStore (zalando/go-keyring), EncryptedStore (AES-256-GCM with machine-derived key), and NewCredentialStore factory.
 - `internal/mqtt/payload.go` — payload encoding/decoding (plaintext, JSON, base64, hex).
 
 Planned backend packages from `PLAN.md` and `docs/rewrite-roadmap.md` include import/export and system integration.

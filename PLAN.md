@@ -639,6 +639,8 @@ Deliverables:
 
 ## Phase 10: Security and Secret Storage
 
+Status: complete. OS keychain integration via zalando/go-keyring (macOS Keychain, Windows Credential Manager, Linux Secret Service) with AES-GCM encrypted fallback. Passwords and TLS keys are stored in the keychain, not in SQLite. No credentials in logs. Security model documented in `docs/security.md`.
+
 Tasks:
 
 - Decide password storage strategy
