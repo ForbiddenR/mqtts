@@ -455,6 +455,8 @@ Deliverables:
 - Tailwind CSS working
 - CI pipeline builds frontend and backend
 
+Status: complete. The Phase 2 scaffold adds a Wails v2 Go app, React 19 + TypeScript + Vite frontend, Tailwind CSS, Bun scripts, a frontend/backend bridge smoke test, and CI workflow.
+
 ## Phase 3: Storage Layer
 
 Tasks:
@@ -479,6 +481,8 @@ Deliverables:
 - CRUD operations for connections
 - CRUD operations for subscriptions
 - Message history persistence
+
+Status: complete. The Phase 3 storage layer adds SQLite persistence via modernc.org/sqlite, explicit migrations, repository pattern with CRUD for connections/subscriptions/messages/wills/collections/settings/publish history, and unit tests using in-memory SQLite.
 
 ## Phase 4: MQTT Core Engine
 

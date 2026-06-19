@@ -4,97 +4,101 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository status
 
-This repository is currently a planning scaffold for `mqtts`, a planned React 19 + Go 1.26.4 + Wails v2 rewrite of MQTTX with Tailwind CSS and SQLite persistence.
+`mqtts` is a Wails v2 desktop application scaffold for a React 19 + TypeScript + Vite frontend and a Go 1.26.4 backend. It is a planned rewrite of MQTTX with Tailwind CSS and SQLite persistence.
 
-Current files:
+Current implementation status:
 
-- `README.md` — contains the project name.
-- `PLAN.md` — contains the product scope, target stack, proposed architecture, implementation phases, milestones, data model draft, and technical risks for the rewrite.
-- `docs/feature-audit.md` — Phase 1 MQTTX feature inventory and include/defer/exclude decisions.
-- `docs/mqttx-compatibility.md` — Phase 1 MQTTX behavior and import/export compatibility checklist.
-- `docs/data-model.md` — Phase 1 MQTTX persistence model audit and planned SQLite mapping notes.
-- `docs/rewrite-roadmap.md` — Phase 1 refined rewrite roadmap and risk register.
-
-Phase 1 (Discovery and Feature Audit) is complete. There are still no application source files, package manifests, Go modules, Wails config, build scripts, tests, Cursor rules, or Copilot instructions yet.
+- Phase 1 Discovery and Feature Audit is complete under `docs/`.
+- Phase 2 Project Bootstrap is complete: the repository contains a Wails app scaffold, Go module, React frontend, Tailwind setup, Bun package scripts, bridge smoke test, and CI workflow.
+- Phase 3 Storage Layer is complete: SQLite persistence with migrations, repository pattern, and CRUD for connections, subscriptions, messages, wills, collections, settings, and publish history.
+- MQTT connection management, import/export, and production MQTT workflows are not implemented yet.
 
 ## Commands
 
-No project-specific build, lint, test, or development commands are currently defined because the app has not been scaffolded yet.
+### Environment
 
-Planned tooling from `PLAN.md`:
+Go may need `/usr/local/go/bin` on `PATH` in this environment:
 
-- Bun, latest stable, for frontend package management and scripts
-- React 19 + TypeScript + Vite for the frontend
-- Tailwind CSS for styling
-- Go 1.26.4 for the backend
-- Wails v2 for the desktop shell
-- SQLite for local persistence
+```sh
+export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
+```
 
-Once the project is scaffolded, update this section with the actual commands. Expected command categories include:
+### Frontend commands
 
-- Bun install command
-- Wails dev command
-- Wails production build command
-- Frontend typecheck/lint/test commands
-- Backend `go test ./...`
-- Single frontend test command
-- Single Go test command
+Run from `frontend/`:
 
-Do not invent commands before the relevant `package.json`, `go.mod`, `wails.json`, or task runner files exist.
+- Install dependencies: `bun install`
+- Start Vite dev server: `bun run dev`
+- Build frontend: `bun run build`
+- Typecheck: `bun run typecheck`
+- Lint: `bun run lint`
+- Test: `bun run test`
+- Watch tests: `bun run test:watch`
+
+### Backend commands
+
+Run from the repository root:
+
+- Download/tidy dependencies: `go mod tidy`
+- Test backend: `go test ./...`
+- Build backend packages: `go build ./...`
+- Format Go code: `gofmt -w .`
+
+### Wails commands
+
+Run from the repository root after installing the Wails CLI and Linux WebKit/GTK dependencies:
+
+- Check Wails environment: `wails doctor`
+- Start desktop app in dev mode: `wails dev`
+- Build desktop app: `wails build`
+- Generate bindings: `wails generate module`
 
 ## Architecture
 
-The concrete code architecture does not exist yet. Use `PLAN.md` as the source of truth for intended direction until source files are created.
+### Backend
 
-Planned high-level architecture:
+- `main.go` — Wails entry point, embeds `frontend/dist`, configures app options, initializes database, binds backend services.
+- `app.go` — `App` service, lifecycle startup hook, `Greet` bridge smoke-test method, and frontend-callable storage methods.
+- `go.mod` — Go module definition with Wails v2, modernc.org/sqlite, and google/uuid dependencies.
+- `wails.json` — Wails project configuration using Bun frontend commands.
+- `internal/models/` — domain structs: Connection, Message, Subscription, Will, Collection, Settings, PublishHistory.
+- `internal/storage/` — SQLite database, migrations, and repository CRUD operations using `database/sql`.
+- `internal/storage/db.go` — database open/close, migration runner, pragmas (foreign keys, WAL).
+- `internal/storage/migrations.go` — numbered migration SQL for all Phase 3 tables.
+- `internal/storage/store.go` — composite Store composing all repositories.
+- `internal/storage/connections.go` — ConnectionRepo with CRUD, unread count management.
+- `internal/storage/subscriptions.go` — SubscriptionRepo with CRUD and MQTT 5 fields.
+- `internal/storage/messages.go` — MessageRepo with CRUD and pagination.
+- `internal/storage/wills.go` — WillRepo with CRUD (one-to-one with connection).
+- `internal/storage/collections.go` — CollectionRepo with adjacency-list tree CRUD.
+- `internal/storage/settings.go` — SettingsRepo with singleton pattern and default initialization.
+- `internal/storage/publish_history.go` — PublishHistoryRepo for headers and payloads.
 
-- Wails v2 desktop app with Go backend services exposed to a React frontend through generated bindings.
-- React 19 frontend organized by feature modules such as connections, messages, publishing, subscriptions, settings, and import/export.
-- Go backend organized around MQTT connection management, local storage, configuration, certificates, import/export, and system integration.
-- SQLite persistence for connections, subscriptions, messages, publish history, settings, payload templates, and certificate metadata.
-- Wails runtime events for real-time MQTT updates from Go to React.
+Planned backend packages from `PLAN.md` and `docs/rewrite-roadmap.md` include MQTT session management, import/export, and system integration.
 
-Planned backend responsibilities:
+### Frontend
 
-- Manage multiple active MQTT client sessions.
-- Connect/disconnect from brokers.
-- Publish and subscribe/unsubscribe.
-- Support MQTT 3.1, 3.1.1, and 5.0.
-- Support TCP, TLS, WebSocket, and secure WebSocket connections.
-- Persist message and connection history.
-- Emit connection, message, subscription, error, and log events to the frontend.
+- `frontend/src/main.tsx` — React root mount.
+- `frontend/src/App.tsx` — Phase 2 app shell, navigation placeholders, Tailwind styling, and Go bridge call.
+- `frontend/src/styles/index.css` — Tailwind directives and global styles.
+- `frontend/wailsjs/` — Wails Go-to-TypeScript bindings; Phase 2 includes minimal stubs that Wails can regenerate.
+- `frontend/package.json` — Bun-managed dependencies and scripts.
 
-Planned frontend responsibilities:
+Planned frontend features are organized around connections, messages, publishing, subscriptions, settings, and import/export.
 
-- Modern desktop UI with Tailwind CSS.
-- Connection manager and connection form.
-- Multi-connection workspace.
-- Subscription panel.
-- Publish composer.
-- Message timeline and message inspector.
-- Search/filtering, payload formatting, and dark/light theme.
-- Settings and import/export screens.
+### Build and CI
+
+- `build/` — Wails build resources, including a placeholder app icon.
+- `.github/workflows/ci.yml` — CI jobs for Go, Bun frontend, and Wails build.
 
 ## Important planning references
 
-Before implementing, read `PLAN.md` and the Phase 1 docs in `docs/`. `PLAN.md` contains:
+Before implementing later phases, read:
 
-- Target stack and toolchain requirements
-- Product scope
-- Proposed project structure
-- Wails backend API sketch
-- MQTT manager responsibilities
-- Frontend module layout
-- Data model draft
-- Backend event contract
-- Implementation phases and milestones
-- Technical risks
-
-Phase 1 docs contain:
-
-- `docs/feature-audit.md` — upstream MQTTX feature inventory and priority decisions.
+- `PLAN.md` — target stack, proposed architecture, phases, milestones, and risks.
+- `docs/feature-audit.md` — MQTTX feature inventory and include/defer/exclude decisions.
 - `docs/mqttx-compatibility.md` — MQTT.js behavior, MQTT 5 behavior, and import/export compatibility checklist.
-- `docs/data-model.md` — upstream TypeORM/SQLite model audit and planned Go/SQLite mapping guidance.
+- `docs/data-model.md` — MQTTX TypeORM/SQLite model audit and planned Go/SQLite mapping guidance.
 - `docs/rewrite-roadmap.md` — refined phase sequencing, dependencies, deferred features, and risk register.
 
-When the app is scaffolded, keep this file updated with the actual architecture and commands rather than only the planned architecture.
+Keep this file updated whenever actual commands, architecture, or tooling change.
