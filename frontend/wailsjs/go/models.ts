@@ -1,5 +1,53 @@
 export namespace main {
 	
+	export class ListMessagesInput {
+	    connectionId: string;
+	    limit: number;
+	    offset: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListMessagesInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.connectionId = source["connectionId"];
+	        this.limit = source["limit"];
+	        this.offset = source["offset"];
+	    }
+	}
+	export class ListMessagesResult {
+	    messages: models.Message[];
+	    total: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListMessagesResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.messages = this.convertValues(source["messages"], models.Message);
+	        this.total = source["total"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class PublishInput {
 	    connectionId: string;
 	    topic: string;
@@ -202,6 +250,103 @@ export namespace models {
 		}
 	}
 	
+	export class Message {
+	    id: string;
+	    // Go type: time
+	    created_at: any;
+	    out: boolean;
+	    payload: string;
+	    qos: number;
+	    retain: boolean;
+	    topic: string;
+	    meta?: string;
+	    payload_format_indicator?: boolean;
+	    message_expiry_interval?: number;
+	    topic_alias?: number;
+	    response_topic?: string;
+	    correlation_data?: string;
+	    user_properties?: Record<string, string>;
+	    subscription_identifier?: number;
+	    content_type?: string;
+	    connection_id: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Message(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.created_at = this.convertValues(source["created_at"], null);
+	        this.out = source["out"];
+	        this.payload = source["payload"];
+	        this.qos = source["qos"];
+	        this.retain = source["retain"];
+	        this.topic = source["topic"];
+	        this.meta = source["meta"];
+	        this.payload_format_indicator = source["payload_format_indicator"];
+	        this.message_expiry_interval = source["message_expiry_interval"];
+	        this.topic_alias = source["topic_alias"];
+	        this.response_topic = source["response_topic"];
+	        this.correlation_data = source["correlation_data"];
+	        this.user_properties = source["user_properties"];
+	        this.subscription_identifier = source["subscription_identifier"];
+	        this.content_type = source["content_type"];
+	        this.connection_id = source["connection_id"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class PublishHistoryHeader {
+	    topic: string;
+	    qos: number;
+	    retain: boolean;
+	    connection_id: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new PublishHistoryHeader(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.topic = source["topic"];
+	        this.qos = source["qos"];
+	        this.retain = source["retain"];
+	        this.connection_id = source["connection_id"];
+	    }
+	}
+	export class PublishHistoryPayload {
+	    payload: string;
+	    payload_type: string;
+	    connection_id: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new PublishHistoryPayload(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.payload = source["payload"];
+	        this.payload_type = source["payload_type"];
+	        this.connection_id = source["connection_id"];
+	    }
+	}
 	
 	export class Settings {
 	    id: string;
@@ -246,6 +391,63 @@ export namespace models {
 	        this.log_level = source["log_level"];
 	        this.ignore_qos0_message = source["ignore_qos0_message"];
 	    }
+	}
+	export class Subscription {
+	    id: string;
+	    topic: string;
+	    qos: number;
+	    disabled: boolean;
+	    alias?: string;
+	    retain: boolean;
+	    nl: boolean;
+	    rap: boolean;
+	    rh: number;
+	    subscription_identifier?: number;
+	    user_properties?: Record<string, string>;
+	    color?: string;
+	    // Go type: time
+	    created_at: any;
+	    connection_id: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Subscription(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.topic = source["topic"];
+	        this.qos = source["qos"];
+	        this.disabled = source["disabled"];
+	        this.alias = source["alias"];
+	        this.retain = source["retain"];
+	        this.nl = source["nl"];
+	        this.rap = source["rap"];
+	        this.rh = source["rh"];
+	        this.subscription_identifier = source["subscription_identifier"];
+	        this.user_properties = source["user_properties"];
+	        this.color = source["color"];
+	        this.created_at = this.convertValues(source["created_at"], null);
+	        this.connection_id = source["connection_id"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 
 }

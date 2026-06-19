@@ -13,6 +13,7 @@ Current implementation status:
 - Phase 3 Storage Layer is complete: SQLite persistence with migrations, repository pattern, and CRUD for connections, subscriptions, messages, wills, collections, settings, and publish history.
 - Phase 4 MQTT Core Engine is complete: Eclipse Paho MQTT client with connection management, publish/subscribe, MQTT 3.1/3.1.1/5.0 support, TLS, Wails event emission, and payload encoding.
 - Phase 5 Connection Management UI is complete: sidebar connection list, tabbed create/edit form (General, Auth, Connection, TLS, MQTT 5, Will), connection status indicators, CRUD operations via Wails bindings, and useConnections/useMqttStatus hooks.
+- Phase 6 Publish and Subscribe Workflow is complete: subscription panel with add/remove, publish composer with QoS/retain/format, message timeline with real-time events, message filtering (direction/topic), publish history, and backend CRUD endpoints for subscriptions/messages.
 - Import/export and production MQTT workflows are not implemented yet.
 
 ## Commands
@@ -95,6 +96,11 @@ Planned backend packages from `PLAN.md` and `docs/rewrite-roadmap.md` include im
 - `frontend/src/components/ConfirmDialog.tsx` — Modal confirmation dialog.
 - `frontend/src/hooks/useConnections.ts` — Hook wrapping Wails CRUD bindings (create, update, remove, duplicate) with loading/error state.
 - `frontend/src/hooks/useMqttStatus.ts` — Hook listening to `mqtt:connection:status` Wails events, polling IsConnected, exposing connect/disconnect.
+- `frontend/src/hooks/useSubscriptions.ts` — Hook for subscription CRUD with auto-subscribe/unsubscribe on the broker.
+- `frontend/src/hooks/useMessages.ts` — Hook for paginated message list with real-time `mqtt:message:received`/`mqtt:message:published` event listeners.
+- `frontend/src/features/subscriptions/SubscriptionPanel.tsx` — Subscription list with add/remove form, QoS selector, topic filter input.
+- `frontend/src/features/publish/PublishComposer.tsx` — Publish form with topic, payload, QoS, retain, format selector, and recent topics dropdown.
+- `frontend/src/features/messages/MessageTimeline.tsx` — Message list with direction badges, topic filter, direction filter, expandable payloads, and clear action.
 - `frontend/src/features/connections/ConnectionStatus.tsx` — Status dot component (green/yellow/red/gray).
 - `frontend/src/features/connections/ConnectionListItem.tsx` — Connection row with status, actions, context menu, delete confirm.
 - `frontend/src/features/connections/ConnectionList.tsx` — Sidebar connection list with New button.

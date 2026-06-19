@@ -7,7 +7,13 @@ export function Connect(arg1:string):Promise<void>;
 
 export function CreateConnection(arg1:models.Connection):Promise<void>;
 
+export function CreateSubscription(arg1:models.Subscription):Promise<void>;
+
 export function DeleteConnection(arg1:string):Promise<void>;
+
+export function DeleteMessagesByConnection(arg1:string):Promise<void>;
+
+export function DeleteSubscription(arg1:string):Promise<void>;
 
 export function Disconnect(arg1:string):Promise<void>;
 
@@ -21,6 +27,14 @@ export function IsConnected(arg1:string):Promise<boolean>;
 
 export function ListConnections():Promise<Array<models.Connection>>;
 
+export function ListMessages(arg1:main.ListMessagesInput):Promise<main.ListMessagesResult>;
+
+export function ListPublishHeaders(arg1:string):Promise<Array<models.PublishHistoryHeader>>;
+
+export function ListPublishPayloads(arg1:string):Promise<Array<models.PublishHistoryPayload>>;
+
+export function ListSubscriptions(arg1:string):Promise<Array<models.Subscription>>;
+
 export function Publish(arg1:main.PublishInput):Promise<void>;
 
 export function Subscribe(arg1:main.SubscribeInput):Promise<void>;
@@ -30,3 +44,5 @@ export function Unsubscribe(arg1:main.UnsubscribeInput):Promise<void>;
 export function UpdateConnection(arg1:models.Connection):Promise<void>;
 
 export function UpdateSettings(arg1:models.Settings):Promise<void>;
+
+export function UpdateSubscription(arg1:models.Subscription):Promise<void>;

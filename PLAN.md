@@ -541,6 +541,8 @@ Deliverables:
 
 ## Phase 6: Publish and Subscribe Workflow
 
+Status: complete. The Phase 6 workflow adds a subscription panel with add/remove, publish composer with QoS/retain/format, message timeline with real-time events, message filtering by direction and topic, publish history headers, and backend CRUD endpoints for subscriptions and messages.
+
 Tasks:
 
 - Build subscription panel

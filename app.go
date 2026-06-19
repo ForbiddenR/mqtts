@@ -115,6 +115,69 @@ func (a *App) IsConnected(id string) bool {
 	return a.mqtt.IsConnected(id)
 }
 
+// --- Subscription methods exposed to frontend ---
+
+// ListSubscriptions returns all subscriptions for a connection.
+func (a *App) ListSubscriptions(connID string) ([]models.Subscription, error) {
+	return a.store.Subscriptions.ListByConnection(a.ctx, connID)
+}
+
+// CreateSubscription saves a new subscription.
+func (a *App) CreateSubscription(s *models.Subscription) error {
+	return a.store.Subscriptions.Create(a.ctx, s)
+}
+
+// UpdateSubscription updates an existing subscription.
+func (a *App) UpdateSubscription(s *models.Subscription) error {
+	return a.store.Subscriptions.Update(a.ctx, s)
+}
+
+// DeleteSubscription removes a subscription by ID.
+func (a *App) DeleteSubscription(id string) error {
+	return a.store.Subscriptions.Delete(a.ctx, id)
+}
+
+// --- Message methods exposed to frontend ---
+
+// ListMessagesInput represents pagination input for listing messages.
+type ListMessagesInput struct {
+	ConnectionID string `json:"connectionId"`
+	Limit        int    `json:"limit"`
+	Offset       int    `json:"offset"`
+}
+
+// ListMessagesResult represents paginated message results.
+type ListMessagesResult struct {
+	Messages []models.Message `json:"messages"`
+	Total    int              `json:"total"`
+}
+
+// ListMessages returns paginated messages for a connection.
+func (a *App) ListMessages(input ListMessagesInput) (*ListMessagesResult, error) {
+	msgs, total, err := a.store.Messages.ListByConnection(a.ctx, input.ConnectionID, input.Limit, input.Offset)
+	if err != nil {
+		return nil, err
+	}
+	return &ListMessagesResult{Messages: msgs, Total: total}, nil
+}
+
+// DeleteMessagesByConnection removes all messages for a connection.
+func (a *App) DeleteMessagesByConnection(connID string) error {
+	return a.store.Messages.DeleteByConnection(a.ctx, connID)
+}
+
+// --- Publish history methods exposed to frontend ---
+
+// ListPublishHeaders returns publish history headers for a connection.
+func (a *App) ListPublishHeaders(connID string) ([]models.PublishHistoryHeader, error) {
+	return a.store.PublishHistory.ListHeaders(a.ctx, connID)
+}
+
+// ListPublishPayloads returns publish history payloads for a connection.
+func (a *App) ListPublishPayloads(connID string) ([]models.PublishHistoryPayload, error) {
+	return a.store.PublishHistory.ListPayloads(a.ctx, connID)
+}
+
 // --- Settings methods exposed to frontend ---
 
 // GetSettings returns the application settings.

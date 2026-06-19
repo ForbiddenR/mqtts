@@ -10,8 +10,20 @@ export function CreateConnection(arg1) {
   return window['go']['main']['App']['CreateConnection'](arg1);
 }
 
+export function CreateSubscription(arg1) {
+  return window['go']['main']['App']['CreateSubscription'](arg1);
+}
+
 export function DeleteConnection(arg1) {
   return window['go']['main']['App']['DeleteConnection'](arg1);
+}
+
+export function DeleteMessagesByConnection(arg1) {
+  return window['go']['main']['App']['DeleteMessagesByConnection'](arg1);
+}
+
+export function DeleteSubscription(arg1) {
+  return window['go']['main']['App']['DeleteSubscription'](arg1);
 }
 
 export function Disconnect(arg1) {
@@ -38,6 +50,22 @@ export function ListConnections() {
   return window['go']['main']['App']['ListConnections']();
 }
 
+export function ListMessages(arg1) {
+  return window['go']['main']['App']['ListMessages'](arg1);
+}
+
+export function ListPublishHeaders(arg1) {
+  return window['go']['main']['App']['ListPublishHeaders'](arg1);
+}
+
+export function ListPublishPayloads(arg1) {
+  return window['go']['main']['App']['ListPublishPayloads'](arg1);
+}
+
+export function ListSubscriptions(arg1) {
+  return window['go']['main']['App']['ListSubscriptions'](arg1);
+}
+
 export function Publish(arg1) {
   return window['go']['main']['App']['Publish'](arg1);
 }
@@ -56,4 +84,8 @@ export function UpdateConnection(arg1) {
 
 export function UpdateSettings(arg1) {
   return window['go']['main']['App']['UpdateSettings'](arg1);
+}
+
+export function UpdateSubscription(arg1) {
+  return window['go']['main']['App']['UpdateSubscription'](arg1);
 }
