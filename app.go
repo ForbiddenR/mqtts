@@ -244,6 +244,92 @@ func (a *App) UpdateSettings(s *models.Settings) error {
 	return a.store.Settings.Update(a.ctx, s)
 }
 
+// --- Payload template methods ---
+
+// GetPayloadTemplates returns the saved payload templates.
+func (a *App) GetPayloadTemplates() ([]models.PayloadTemplate, error) {
+	s, err := a.store.Settings.Get(a.ctx)
+	if err != nil {
+		return nil, err
+	}
+	return s.PayloadTemplates, nil
+}
+
+// SavePayloadTemplate adds or updates a payload template.
+func (a *App) SavePayloadTemplate(t models.PayloadTemplate) error {
+	s, err := a.store.Settings.Get(a.ctx)
+	if err != nil {
+		return err
+	}
+	found := false
+	for i, existing := range s.PayloadTemplates {
+		if existing.Name == t.Name {
+			s.PayloadTemplates[i] = t
+			found = true
+			break
+		}
+	}
+	if !found {
+		s.PayloadTemplates = append(s.PayloadTemplates, t)
+	}
+	return a.store.Settings.Update(a.ctx, s)
+}
+
+// DeletePayloadTemplate removes a payload template by name.
+func (a *App) DeletePayloadTemplate(name string) error {
+	s, err := a.store.Settings.Get(a.ctx)
+	if err != nil {
+		return err
+	}
+	for i, t := range s.PayloadTemplates {
+		if t.Name == name {
+			s.PayloadTemplates = append(s.PayloadTemplates[:i], s.PayloadTemplates[i+1:]...)
+			break
+		}
+	}
+	return a.store.Settings.Update(a.ctx, s)
+}
+
+// --- Topic alias methods ---
+
+// GetTopicAliases returns the topic alias map.
+func (a *App) GetTopicAliases() (map[string]string, error) {
+	s, err := a.store.Settings.Get(a.ctx)
+	if err != nil {
+		return nil, err
+	}
+	if s.TopicAliases == nil {
+		return map[string]string{}, nil
+	}
+	return s.TopicAliases, nil
+}
+
+// SetTopicAlias adds or updates a topic alias.
+func (a *App) SetTopicAlias(alias string, topic string) error {
+	s, err := a.store.Settings.Get(a.ctx)
+	if err != nil {
+		return err
+	}
+	if s.TopicAliases == nil {
+		s.TopicAliases = make(map[string]string)
+	}
+	s.TopicAliases[alias] = topic
+	return a.store.Settings.Update(a.ctx, s)
+}
+
+// DeleteTopicAlias removes a topic alias.
+func (a *App) DeleteTopicAlias(alias string) error {
+	s, err := a.store.Settings.Get(a.ctx)
+	if err != nil {
+		return err
+	}
+	if s.TopicAliases == nil {
+		return nil
+	}
+	delete(s.TopicAliases, alias)
+	return a.store.Settings.Update(a.ctx, s)
+}
+
 // --- Import/Export ---
 
 // ExportData represents the full export payload.

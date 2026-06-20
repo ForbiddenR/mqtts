@@ -40,6 +40,10 @@ func (r *SettingsRepo) Update(ctx context.Context, s *models.Settings) error {
 	if err != nil {
 		return fmt.Errorf("marshal templates: %w", err)
 	}
+	aliasesJSON, err := json.Marshal(s.TopicAliases)
+	if err != nil {
+		return fmt.Errorf("marshal aliases: %w", err)
+	}
 
 	_, err = r.db.ExecContext(ctx, `
 		UPDATE settings SET
@@ -47,13 +51,13 @@ func (r *SettingsRepo) Update(ctx context.Context, s *models.Settings) error {
 			max_reconnect_times = ?, auto_resub = ?, sync_os_theme = ?, multi_topics = ?,
 			json_highlight = ?, enable_copilot = ?, open_ai_api_host = ?, open_ai_api_key = ?,
 			model = ?, log_level = ?, ignore_qos0_message = ?, payload_templates = ?,
-			last_connection_id = ?
+			last_connection_id = ?, topic_aliases = ?
 		WHERE id = ?`,
 		s.Width, s.Height, boolToInt(s.AutoCheck), s.CurrentLang, s.CurrentTheme,
 		s.MaxReconnectTimes, boolToInt(s.AutoResub), boolToInt(s.SyncOSTheme), boolToInt(s.MultiTopics),
 		boolToInt(s.JSONHighlight), boolToInt(s.EnableCopilot), s.OpenAIAPIHost, s.OpenAIAPIKey,
 		s.Model, s.LogLevel, boolToInt(s.IgnoreQoS0Message), string(templatesJSON),
-		s.LastConnectionID,
+		s.LastConnectionID, string(aliasesJSON),
 		settingsSingletonID,
 	)
 	if err != nil {
@@ -67,7 +71,8 @@ func (r *SettingsRepo) get(ctx context.Context) (*models.Settings, error) {
 		SELECT id, width, height, auto_check, current_lang, current_theme,
 			max_reconnect_times, auto_resub, sync_os_theme, multi_topics,
 			json_highlight, enable_copilot, open_ai_api_host, open_ai_api_key,
-			model, log_level, ignore_qos0_message, payload_templates, last_connection_id
+			model, log_level, ignore_qos0_message, payload_templates, last_connection_id,
+			topic_aliases
 		FROM settings WHERE id = ?
 	`, settingsSingletonID)
 	return scanSettings(row)
@@ -78,37 +83,46 @@ func (r *SettingsRepo) create(ctx context.Context, s *models.Settings) error {
 	if err != nil {
 		return fmt.Errorf("marshal templates: %w", err)
 	}
+	aliasesJSON, err := json.Marshal(s.TopicAliases)
+	if err != nil {
+		return fmt.Errorf("marshal aliases: %w", err)
+	}
 
 	_, err = r.db.ExecContext(ctx, `
 		INSERT INTO settings (
 			id, width, height, auto_check, current_lang, current_theme,
 			max_reconnect_times, auto_resub, sync_os_theme, multi_topics,
 			json_highlight, enable_copilot, open_ai_api_host, open_ai_api_key,
-			model, log_level, ignore_qos0_message, payload_templates, last_connection_id
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			model, log_level, ignore_qos0_message, payload_templates, last_connection_id,
+			topic_aliases
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		s.ID, s.Width, s.Height, boolToInt(s.AutoCheck), s.CurrentLang, s.CurrentTheme,
 		s.MaxReconnectTimes, boolToInt(s.AutoResub), boolToInt(s.SyncOSTheme), boolToInt(s.MultiTopics),
 		boolToInt(s.JSONHighlight), boolToInt(s.EnableCopilot), s.OpenAIAPIHost, s.OpenAIAPIKey,
 		s.Model, s.LogLevel, boolToInt(s.IgnoreQoS0Message), string(templatesJSON),
-		s.LastConnectionID,
+		s.LastConnectionID, string(aliasesJSON),
 	)
 	return err
 }
 
 func scanSettings(row *sql.Row) (*models.Settings, error) {
 	var s models.Settings
-	var templatesJSON string
+	var templatesJSON, aliasesJSON string
 	err := row.Scan(
 		&s.ID, &s.Width, &s.Height, &s.AutoCheck, &s.CurrentLang, &s.CurrentTheme,
 		&s.MaxReconnectTimes, &s.AutoResub, &s.SyncOSTheme, &s.MultiTopics,
 		&s.JSONHighlight, &s.EnableCopilot, &s.OpenAIAPIHost, &s.OpenAIAPIKey,
 		&s.Model, &s.LogLevel, &s.IgnoreQoS0Message, &templatesJSON, &s.LastConnectionID,
+		&aliasesJSON,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("scan settings: %w", err)
 	}
 	if templatesJSON != "" && templatesJSON != "null" {
 		_ = json.Unmarshal([]byte(templatesJSON), &s.PayloadTemplates)
+	}
+	if aliasesJSON != "" && aliasesJSON != "null" {
+		_ = json.Unmarshal([]byte(aliasesJSON), &s.TopicAliases)
 	}
 	return &s, nil
 }

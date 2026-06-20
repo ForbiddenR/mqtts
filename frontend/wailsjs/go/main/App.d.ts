@@ -14,7 +14,11 @@ export function DeleteConnection(arg1:string):Promise<void>;
 
 export function DeleteMessagesByConnection(arg1:string):Promise<void>;
 
+export function DeletePayloadTemplate(arg1:string):Promise<void>;
+
 export function DeleteSubscription(arg1:string):Promise<void>;
+
+export function DeleteTopicAlias(arg1:string):Promise<void>;
 
 export function Disconnect(arg1:string):Promise<void>;
 
@@ -26,7 +30,11 @@ export function GetConnection(arg1:string):Promise<models.Connection>;
 
 export function GetConnectionStats(arg1:string):Promise<mqtt.ConnectionStats>;
 
+export function GetPayloadTemplates():Promise<Array<models.PayloadTemplate>>;
+
 export function GetSettings():Promise<models.Settings>;
+
+export function GetTopicAliases():Promise<Record<string, string>>;
 
 export function Greet(arg1:string):Promise<string>;
 
@@ -45,6 +53,10 @@ export function ListPublishPayloads(arg1:string):Promise<Array<models.PublishHis
 export function ListSubscriptions(arg1:string):Promise<Array<models.Subscription>>;
 
 export function Publish(arg1:main.PublishInput):Promise<void>;
+
+export function SavePayloadTemplate(arg1:models.PayloadTemplate):Promise<void>;
+
+export function SetTopicAlias(arg1:string,arg2:string):Promise<void>;
 
 export function Subscribe(arg1:main.SubscribeInput):Promise<void>;
 

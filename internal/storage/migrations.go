@@ -190,4 +190,8 @@ CREATE TABLE settings (
 	{
 		sql: `ALTER TABLE settings ADD COLUMN last_connection_id TEXT NOT NULL DEFAULT '';`,
 	},
+	// 11: add topic_aliases to settings
+	{
+		sql: `ALTER TABLE settings ADD COLUMN topic_aliases TEXT NOT NULL DEFAULT '{}';`,
+	},
 }

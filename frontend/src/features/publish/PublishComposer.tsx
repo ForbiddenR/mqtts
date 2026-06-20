@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Input, Select, Textarea, Checkbox } from '../../components/FormField';
 import { Publish } from '../../../wailsjs/go/main/App';
 import type { models } from '../../../wailsjs/go/models';
@@ -24,6 +24,71 @@ const FORMAT_OPTIONS = [
   { value: 'hex', label: 'Hex' },
 ];
 
+// Mock data generators
+const randomId = () => Math.random().toString(36).substring(2, 10);
+const randomFloat = (min: number, max: number) => +(min + Math.random() * (max - min)).toFixed(2);
+const randomInt = (min: number, max: number) => Math.floor(min + Math.random() * (max - min + 1));
+const randomBool = () => Math.random() > 0.5;
+
+const MOCK_GENERATORS: Record<string, () => { payload: string; format: string }> = {
+  'JSON Sensor': () => ({
+    payload: JSON.stringify({
+      id: randomId(),
+      temperature: randomFloat(18, 35),
+      humidity: randomFloat(30, 90),
+      pressure: randomFloat(990, 1030),
+      timestamp: new Date().toISOString(),
+    }, null, 2),
+    format: 'json',
+  }),
+  'JSON Device': () => ({
+    payload: JSON.stringify({
+      deviceId: `device-${randomId()}`,
+      status: randomBool() ? 'online' : 'offline',
+      battery: randomInt(0, 100),
+      firmware: `v${randomInt(1, 5)}.${randomInt(0, 9)}.${randomInt(0, 99)}`,
+      rssi: randomInt(-100, -30),
+      timestamp: new Date().toISOString(),
+    }, null, 2),
+    format: 'json',
+  }),
+  'JSON Event': () => ({
+    payload: JSON.stringify({
+      event: ['click', 'scroll', 'submit', 'load', 'error'][randomInt(0, 4)],
+      userId: `user-${randomInt(1000, 9999)}`,
+      page: ['home', 'dashboard', 'settings', 'profile'][randomInt(0, 3)],
+      duration: randomInt(50, 5000),
+      timestamp: new Date().toISOString(),
+    }, null, 2),
+    format: 'json',
+  }),
+  'Random String': () => ({
+    payload: Array.from({ length: randomInt(10, 50) }, () =>
+      'abcdefghijklmnopqrstuvwxyz0123456789'.charAt(randomInt(0, 35))
+    ).join(''),
+    format: 'plaintext',
+  }),
+  'Timestamp': () => ({
+    payload: new Date().toISOString(),
+    format: 'plaintext',
+  }),
+  'Counter': (() => {
+    let count = 0;
+    return () => ({
+      payload: JSON.stringify({ count: ++count, timestamp: new Date().toISOString() }),
+      format: 'json',
+    });
+  })(),
+  'Boolean': () => ({
+    payload: JSON.stringify({ value: randomBool() }),
+    format: 'json',
+  }),
+  'Number': () => ({
+    payload: String(randomFloat(-1000, 1000)),
+    format: 'plaintext',
+  }),
+};
+
 export function PublishComposer({
   connectionId,
   recentTopics = [],
@@ -41,6 +106,7 @@ export function PublishComposer({
   const [showTemplates, setShowTemplates] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const [showMockMenu, setShowMockMenu] = useState(false);
 
   const handlePublish = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,11 +149,47 @@ export function PublishComposer({
     setShowSaveDialog(false);
   };
 
+  const generateMock = useCallback((type: string) => {
+    const generator = MOCK_GENERATORS[type];
+    if (!generator) return;
+    const result = generator();
+    setPayload(result.payload);
+    setFormat(result.format);
+    setShowMockMenu(false);
+  }, []);
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
         <h3 className="text-sm font-semibold text-slate-300">Publish</h3>
         <div className="flex items-center gap-1">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowMockMenu(!showMockMenu)}
+              className="rounded px-2 py-1 text-xs text-amber-400 hover:bg-slate-800 hover:text-amber-300"
+              title="Generate mock data"
+            >
+              Mock
+            </button>
+            {showMockMenu && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowMockMenu(false)} />
+                <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-lg border border-slate-700 bg-slate-800 shadow-xl">
+                  {Object.keys(MOCK_GENERATORS).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => generateMock(type)}
+                      className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-700"
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
           {templates.length > 0 && (
             <div className="relative">
               <button

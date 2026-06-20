@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import type { models } from '../../../wailsjs/go/models';
 import type { UseMessagesResult } from '../../hooks/useMessages';
@@ -9,6 +9,36 @@ interface MessageTimelineProps {
 }
 
 type DisplayMode = 'text' | 'json' | 'hex' | 'base64';
+
+interface DiffLine {
+  type: 'equal' | 'added' | 'removed';
+  text: string;
+}
+
+function computeDiff(a: string, b: string): DiffLine[] {
+  const linesA = a.split('\n');
+  const linesB = b.split('\n');
+  const result: DiffLine[] = [];
+  const maxLen = Math.max(linesA.length, linesB.length);
+
+  for (let i = 0; i < maxLen; i++) {
+    const lineA = linesA[i];
+    const lineB = linesB[i];
+
+    if (lineA === undefined) {
+      result.push({ type: 'added', text: lineB });
+    } else if (lineB === undefined) {
+      result.push({ type: 'removed', text: lineA });
+    } else if (lineA === lineB) {
+      result.push({ type: 'equal', text: lineA });
+    } else {
+      result.push({ type: 'removed', text: lineA });
+      result.push({ type: 'added', text: lineB });
+    }
+  }
+
+  return result;
+}
 
 export function MessageTimeline({ connectionId, messages }: MessageTimelineProps) {
   const { messages: msgs, total, loading, error, loadMore, clearAll, hasMore } = messages;
@@ -21,6 +51,47 @@ export function MessageTimeline({ connectionId, messages }: MessageTimelineProps
   const [selectedMsg, setSelectedMsg] = useState<models.Message | null>(null);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('text');
   const [copied, setCopied] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareMsgs, setCompareMsgs] = useState<[models.Message | null, models.Message | null]>([null, null]);
+  const [showDiff, setShowDiff] = useState(false);
+
+  const toggleCompare = useCallback((msg: models.Message) => {
+    setCompareMsgs((prev) => {
+      if (!prev[0]) return [msg, null];
+      if (!prev[1]) {
+        if (prev[0].id === msg.id) return [null, null];
+        return [prev[0], msg];
+      }
+      return [msg, null];
+    });
+  }, []);
+
+  const formatPayload = useCallback((payload: string, mode: DisplayMode): string => {
+    switch (mode) {
+      case 'json': {
+        try {
+          return JSON.stringify(JSON.parse(payload), null, 2);
+        } catch {
+          return payload;
+        }
+      }
+      case 'hex':
+        return Array.from(new TextEncoder().encode(payload))
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join(' ');
+      case 'base64':
+        return btoa(payload);
+      default:
+        return payload;
+    }
+  }, []);
+
+  const diffLines = useMemo(() => {
+    if (!compareMsgs[0] || !compareMsgs[1]) return [];
+    const a = formatPayload(compareMsgs[0].payload, 'json');
+    const b = formatPayload(compareMsgs[1].payload, 'json');
+    return computeDiff(a, b);
+  }, [compareMsgs, formatPayload]);
 
   useEffect(() => {
     if (scrollRef.current && scrollRef.current.scrollTop < 50) {
@@ -67,26 +138,6 @@ export function MessageTimeline({ connectionId, messages }: MessageTimelineProps
     if (payload.length <= maxLen) return payload;
     return payload.slice(0, maxLen) + '…';
   };
-
-  const formatPayload = useCallback((payload: string, mode: DisplayMode): string => {
-    switch (mode) {
-      case 'json': {
-        try {
-          return JSON.stringify(JSON.parse(payload), null, 2);
-        } catch {
-          return payload;
-        }
-      }
-      case 'hex':
-        return Array.from(new TextEncoder().encode(payload))
-          .map((b) => b.toString(16).padStart(2, '0'))
-          .join(' ');
-      case 'base64':
-        return btoa(payload);
-      default:
-        return payload;
-    }
-  }, []);
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -135,6 +186,24 @@ export function MessageTimeline({ connectionId, messages }: MessageTimelineProps
           <div className="flex items-center gap-2">
             <button
               type="button"
+              onClick={() => {
+                setCompareMode(!compareMode);
+                if (compareMode) {
+                  setCompareMsgs([null, null]);
+                  setShowDiff(false);
+                }
+              }}
+              className={`rounded-lg px-2 py-1 text-xs transition ${
+                compareMode
+                  ? 'bg-amber-500/20 text-amber-400'
+                  : 'text-slate-500 hover:bg-slate-800 hover:text-slate-300'
+              }`}
+              title="Compare two messages"
+            >
+              {compareMode ? 'Cancel' : 'Compare'}
+            </button>
+            <button
+              type="button"
               onClick={() => setShowClearConfirm(true)}
               className="rounded-lg p-1.5 text-slate-500 transition hover:bg-red-500/10 hover:text-red-400"
               title="Clear all messages"
@@ -181,6 +250,28 @@ export function MessageTimeline({ connectionId, messages }: MessageTimelineProps
         </div>
       )}
 
+      {compareMode && (
+        <div className="mx-3 mt-2 rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-2 text-xs text-amber-300 flex items-center justify-between">
+          <span>
+            {!compareMsgs[0]
+              ? 'Click a message to select as the first for comparison'
+              : !compareMsgs[1]
+                ? 'Click a second message to compare'
+                : `${compareMsgs[0].topic} vs ${compareMsgs[1].topic}`
+            }
+          </span>
+          {compareMsgs[0] && compareMsgs[1] && (
+            <button
+              type="button"
+              onClick={() => setShowDiff(!showDiff)}
+              className="rounded bg-amber-500/20 px-2 py-0.5 text-xs text-amber-300 hover:bg-amber-500/30"
+            >
+              {showDiff ? 'Hide Diff' : 'Show Diff'}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Message list */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
         {loading && msgs.length === 0 ? (
@@ -204,7 +295,14 @@ export function MessageTimeline({ connectionId, messages }: MessageTimelineProps
                 message={msg}
                 formatTime={formatTime}
                 truncatePayload={truncatePayload}
-                onSelect={setSelectedMsg}
+                onSelect={compareMode ? toggleCompare : setSelectedMsg}
+                compareMode={compareMode}
+                isCompareSelected={
+                  compareMode && (compareMsgs[0]?.id === msg.id || compareMsgs[1]?.id === msg.id)
+                }
+                compareIndex={
+                  compareMsgs[0]?.id === msg.id ? 0 : compareMsgs[1]?.id === msg.id ? 1 : -1
+                }
               />
             ))}
             {hasMore && (
@@ -330,6 +428,72 @@ export function MessageTimeline({ connectionId, messages }: MessageTimelineProps
         </div>
       )}
 
+      {/* Diff view */}
+      {showDiff && compareMsgs[0] && compareMsgs[1] && (
+        <div className="border-t border-slate-800 bg-slate-900 max-h-[50%] overflow-y-auto">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="inline-block rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-medium text-blue-400">A</span>
+                <span className="font-mono text-xs text-cyan-400">{compareMsgs[0].topic}</span>
+              </div>
+              <span className="text-slate-600">vs</span>
+              <div className="flex items-center gap-2">
+                <span className="inline-block rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">B</span>
+                <span className="font-mono text-xs text-cyan-400">{compareMsgs[1].topic}</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowDiff(false)}
+              className="rounded-lg p-1 text-slate-500 hover:text-slate-300"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="p-4">
+            <div className="mb-2 flex items-center gap-4 text-[10px]">
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-slate-600" />
+                <span className="text-slate-400">Unchanged</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+                <span className="text-slate-400">Removed (A)</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="text-slate-400">Added (B)</span>
+              </span>
+            </div>
+            <pre className="max-h-64 overflow-auto rounded-lg border border-slate-800 bg-slate-950 p-3 font-mono text-xs">
+              {diffLines.map((line, i) => (
+                <div
+                  key={i}
+                  className={`${
+                    line.type === 'added'
+                      ? 'bg-emerald-500/10 text-emerald-300'
+                      : line.type === 'removed'
+                        ? 'bg-red-500/10 text-red-300'
+                        : 'text-slate-400'
+                  }`}
+                >
+                  <span className="inline-block w-6 text-right pr-2 text-slate-600 select-none">
+                    {line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ' '}
+                  </span>
+                  {line.text || ' '}
+                </div>
+              ))}
+              {diffLines.length === 0 && (
+                <div className="text-slate-500">Messages are identical</div>
+              )}
+            </pre>
+          </div>
+        </div>
+      )}
+
       <ConfirmDialog
         open={showClearConfirm}
         title="Clear Messages"
@@ -348,16 +512,28 @@ function MessageItem({
   formatTime,
   truncatePayload,
   onSelect,
+  compareMode = false,
+  isCompareSelected = false,
+  compareIndex = -1,
 }: {
   message: models.Message;
   formatTime: (ts: string) => string;
   truncatePayload: (p: string, max?: number) => string;
   onSelect: (msg: models.Message) => void;
+  compareMode?: boolean;
+  isCompareSelected?: boolean;
+  compareIndex?: number;
 }) {
   return (
     <div
-      className={`group px-4 py-2.5 transition hover:bg-slate-800/30 cursor-pointer ${
-        message.out ? 'border-l-2 border-l-blue-500/30' : 'border-l-2 border-l-emerald-500/30'
+      className={`group px-4 py-2.5 transition cursor-pointer ${
+        isCompareSelected
+          ? compareIndex === 0
+            ? 'bg-blue-500/10 border-l-2 border-l-blue-500'
+            : 'bg-emerald-500/10 border-l-2 border-l-emerald-500'
+          : message.out
+            ? 'border-l-2 border-l-blue-500/30 hover:bg-slate-800/30'
+            : 'border-l-2 border-l-emerald-500/30 hover:bg-slate-800/30'
       }`}
       onClick={() => onSelect(message)}
     >

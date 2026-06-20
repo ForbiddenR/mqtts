@@ -22,8 +22,16 @@ export function DeleteMessagesByConnection(arg1) {
   return window['go']['main']['App']['DeleteMessagesByConnection'](arg1);
 }
 
+export function DeletePayloadTemplate(arg1) {
+  return window['go']['main']['App']['DeletePayloadTemplate'](arg1);
+}
+
 export function DeleteSubscription(arg1) {
   return window['go']['main']['App']['DeleteSubscription'](arg1);
+}
+
+export function DeleteTopicAlias(arg1) {
+  return window['go']['main']['App']['DeleteTopicAlias'](arg1);
 }
 
 export function Disconnect(arg1) {
@@ -46,8 +54,16 @@ export function GetConnectionStats(arg1) {
   return window['go']['main']['App']['GetConnectionStats'](arg1);
 }
 
+export function GetPayloadTemplates() {
+  return window['go']['main']['App']['GetPayloadTemplates']();
+}
+
 export function GetSettings() {
   return window['go']['main']['App']['GetSettings']();
+}
+
+export function GetTopicAliases() {
+  return window['go']['main']['App']['GetTopicAliases']();
 }
 
 export function Greet(arg1) {
@@ -84,6 +100,14 @@ export function ListSubscriptions(arg1) {
 
 export function Publish(arg1) {
   return window['go']['main']['App']['Publish'](arg1);
+}
+
+export function SavePayloadTemplate(arg1) {
+  return window['go']['main']['App']['SavePayloadTemplate'](arg1);
+}
+
+export function SetTopicAlias(arg1, arg2) {
+  return window['go']['main']['App']['SetTopicAlias'](arg1, arg2);
 }
 
 export function Subscribe(arg1) {

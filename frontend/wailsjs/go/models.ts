@@ -402,6 +402,7 @@ export namespace models {
 	    ignore_qos0_message: boolean;
 	    payload_templates?: PayloadTemplate[];
 	    last_connection_id?: string;
+	    topic_aliases?: Record<string, string>;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -428,6 +429,7 @@ export namespace models {
 	        this.ignore_qos0_message = source["ignore_qos0_message"];
 	        this.payload_templates = this.convertValues(source["payload_templates"], PayloadTemplate);
 	        this.last_connection_id = source["last_connection_id"];
+	        this.topic_aliases = source["topic_aliases"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

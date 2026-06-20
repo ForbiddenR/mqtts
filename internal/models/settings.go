@@ -19,8 +19,9 @@ type Settings struct {
 	Model              string            `json:"model"`
 	LogLevel           string            `json:"log_level"`
 	IgnoreQoS0Message  bool              `json:"ignore_qos0_message"`
-	PayloadTemplates   []PayloadTemplate `json:"payload_templates,omitempty"`
-	LastConnectionID   string            `json:"last_connection_id,omitempty"`
+	PayloadTemplates   []PayloadTemplate   `json:"payload_templates,omitempty"`
+	LastConnectionID   string              `json:"last_connection_id,omitempty"`
+	TopicAliases       map[string]string   `json:"topic_aliases,omitempty"`
 }
 
 // PayloadTemplate represents a saved payload template.
