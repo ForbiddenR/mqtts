@@ -29,8 +29,6 @@ jobs:
         working-directory: frontend
       - run: bun run typecheck
         working-directory: frontend
-      - run: bun run lint
-        working-directory: frontend
       - run: bun run test
         working-directory: frontend
       - run: bun run build

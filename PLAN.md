@@ -680,6 +680,8 @@ Depending on the original MQTTX feature audit, implement:
 
 ## Phase 12: Testing and Packaging
 
+Status: complete. 22 Go backend tests (storage, MQTT options, security), 21 frontend component tests (App, ConnectionForm, MessageTimeline, PublishComposer). CI workflow runs backend/frontend/Wails build on push. Release workflow builds for macOS (arm64/amd64), Linux (amd64), and Windows (amd64) on version tags.
+
 Tasks:
 
 - Add backend unit tests

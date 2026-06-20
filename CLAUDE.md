@@ -19,7 +19,7 @@ Current implementation status:
 - Phase 9 Import and Export is complete: JSON export of all connections and subscriptions, JSON import with ID remapping and error reporting.
 - Phase 10 Security and Secret Storage is complete: OS keychain integration (macOS/Windows/Linux) via zalando/go-keyring, AES-GCM encrypted fallback, sensitive fields stripped from SQLite, no credentials in logs. Security model documented in `docs/security.md`.
 - Phase 11 Advanced Features is complete: connection statistics (messages/bytes/latency/uptime), latency measurement via subscribe round-trip, payload templates stored in settings, saved workspace (last selected connection persisted).
-- Phase 12 (testing/packaging) remains. Backend has 22 Go tests; frontend has 7 component tests. Cross-platform CI/CD not yet configured.
+- Phase 12 Testing and Packaging is complete: 22 Go backend tests, 21 frontend component tests (4 test files), CI workflow (backend/frontend/Wails build), and release workflow (macOS arm64/amd64, Linux amd64, Windows amd64) triggered by version tags.
 
 ## Commands
 
